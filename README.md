@@ -59,4 +59,4 @@ Notes: zones are used in `locations` variables as well - to create inline keyboa
 - Deploy updated code (Deploy->Manage deployments->Edit->New version->Deploy)
 - Execute `getMe()`, `setWebhook()`, `createTimeDrivenTriggers()` functions to initialise integrations and create triggers.
 - Your bot is ready to go! Find it in telegram, share with collegues and start usage.
-Note: Be aware that any Google app script has [limits and quotes](https://developers.google.com/apps-script/guides/services/quotas)
+Note: Be aware that any Google app script has [limits and quotas](https://developers.google.com/apps-script/guides/services/quotas)
