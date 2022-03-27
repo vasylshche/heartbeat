@@ -310,7 +310,14 @@ function markExpiredHeartbeats() {
 function cleanUpHeartbeats() {
   var peopleSpreadSheet = SpreadsheetApp.openById(ssId).getSheetByName(peopleSpreadsheet);
   var rangeIndex = "F2:F" + peopleSpreadSheet.getLastRow();
-  peopleSpreadSheet.getRange(rangeIndex).setBackground(null);
+  var range = peopleSpreadSheet.getRange(rangeIndex);
+  var numRows = range.getNumRows();
+  for (let i = 1; i <= numRows; i++) {
+    var cell = range.getCell(i, 1);
+    if (cell.getBackground() != RED) {
+      cell.setBackground(null);
+    }
+  }
 }
 
 /**
