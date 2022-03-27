@@ -78,18 +78,14 @@ var moodsKeyboard = inlineKeyboard(moods);
  */
 function doPost(e) {
   try {
-    // respond(adminID, "TOP: " + e.postData.contents);
     var contents = JSON.parse(e.postData.contents);
     if (contents.callback_query) {
       var callbackContent = contents.callback_query
       var chatId = callbackContent.message.chat.id;
       var username = callbackContent.from.username;
-      // respond(adminID, "Extracted variables");
       if (locations.some(buttons => buttons.includes(callbackContent.data))) {
         var location = callbackContent.data
-        // respond(adminID, "LOCATIONS: " + JSON.stringify(callbackContent));
         var name = callbackContent.from.first_name + " " + callbackContent.from.last_name;
-        // respond(adminID, "Extracted locations");
         appendLocation(username, chatId, name, location);
         respondWithKeyboard(chatId, MOOD_MESSAGE, moodsKeyboard);
       } else if (moods.some(buttons => buttons.includes(callbackContent.data)) && callbackContent.data != COMMENT_BUTTON) {
@@ -101,7 +97,6 @@ function doPost(e) {
         respond(chatId, GOODBYE_MESSAGE);
       }
     } else if (contents.message.reply_to_message && contents.message.reply_to_message.text == COMMENT_MESSAGE) {
-      // respond(adminID, "Reply: " + JSON.stringify(contents.message));
       var chatId = contents.message.reply_to_message.chat.id;
       appendComment(chatId, contents.message.text);
       respond(chatId, GOODBYE_MESSAGE);
@@ -256,7 +251,6 @@ function appendMood(chatId, mood) {
  */
 function appendComment(chatId, comment) {
   var spreadSheet = getSpreadSheet(toDateString(new Date()));
-  // respond(adminID, "Sheet");
   var range = spreadSheet.createTextFinder(chatId).findAll();
   if (range.length) {
     var rawIndex = range[0].getRowIndex();
@@ -271,7 +265,7 @@ function appendComment(chatId, comment) {
 function doTest() {
   var stringBody = {
     "postData": {
-      "contents": "{\"message\":{\"from\":{\"username\":\"username\"},\"text\":\"text\",\"chat\":{\"id\":\"246446873\",\"first_name\":\"First\",\"last_name\":\"Last\"}}}"
+      "contents": "{\"message\":{\"from\":{\"username\":\"username\"},\"text\":\"text\",\"chat\":{\"id\":\"" + adminID + "\",\"first_name\":\"First\",\"last_name\":\"Last\"}}}"
     }
   }
   doPost(stringBody);
