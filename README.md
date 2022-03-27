@@ -15,7 +15,7 @@ Because of war in Ukraine, we have to understand current status of all of our co
 - `People` spreadsheet will be updated. It will contain current location in `Last location` column and heartbeat dateTime in `Last heartbeat` column
 - Script contains multiple time based triggers. As a result, all your collegues will receive at least 1 notification (at 10a.m.) from telegram bot, where they will have to select their location. If this notification was ignored, they will receive 2nd notification at 3p.m.. If collegue selected his location, cell with heartbeat timestamp will have green background. `Last location` cell background will be marked with corresponding color based on location zone
 - If heartbeat was missed, at 4p.m. all `Last heartbeat` values will be updated with red background
-- At 3a.m. all `Last heartbeat` backgrounds will be reset.
+- At 3a.m. all `Last heartbeat`, except marked as red, backgrounds will be reset.
 
 ## Location zones
 - Red. Active war zone, or russian territory. Your collegues that are located in this zone require immediate relocation
