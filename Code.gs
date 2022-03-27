@@ -5,7 +5,7 @@ var token = "";
 var telegramUrl = "https://api.telegram.org/bot" + token;
 var webAppUrl = "";
 var ssId = "";
-var adminID = "";
+var adminChatId = "";
 var peopleSpreadsheet = "People";
 
 /**
@@ -120,7 +120,7 @@ function doPost(e) {
       }
     }
   } catch (e) {
-    respond(adminID, "ERROR: " + JSON.stringify(e, null, 4));
+    respond(adminChatId, "ERROR: " + JSON.stringify(e, null, 4));
   }
 }
 
@@ -260,12 +260,12 @@ function appendComment(chatId, comment) {
 }
 
 /**
- * Start bot for adminId
+ * Start bot for adminChatId
  */
 function doTest() {
   var stringBody = {
     "postData": {
-      "contents": "{\"message\":{\"from\":{\"username\":\"username\"},\"text\":\"text\",\"chat\":{\"id\":\"" + adminID + "\",\"first_name\":\"First\",\"last_name\":\"Last\"}}}"
+      "contents": "{\"message\":{\"from\":{\"username\":\"username\"},\"text\":\"text\",\"chat\":{\"id\":\"" + adminChatId + "\",\"first_name\":\"First\",\"last_name\":\"Last\"}}}"
     }
   }
   doPost(stringBody);
@@ -305,16 +305,18 @@ function markExpiredHeartbeats() {
 }
 
 /**
- * Triggered by timer, reset heartbeat background for everyone at the end of the day
+ * Triggered by timer, reset heartbeat background for everyone at the end of the day, except if
+ * heartbeat was marked as red, or if it was updated today
  */
 function cleanUpHeartbeats() {
+  var today = toDateString(new Date()).split(" ")[0];
   var peopleSpreadSheet = SpreadsheetApp.openById(ssId).getSheetByName(peopleSpreadsheet);
   var rangeIndex = "F2:F" + peopleSpreadSheet.getLastRow();
   var range = peopleSpreadSheet.getRange(rangeIndex);
   var numRows = range.getNumRows();
   for (let i = 1; i <= numRows; i++) {
     var cell = range.getCell(i, 1);
-    if (cell.getBackground() != RED) {
+    if (cell.getBackground() != RED && !cell.getValue().toString().includes(today)) {
       cell.setBackground(null);
     }
   }
@@ -405,5 +407,5 @@ function setWebhook() {
 
 function doGet(e) {
   // write back to the user
-  return HtmlService.createHtmlOutput("Hi there");
+  return HtmlService.createHtmlOutput("Hello there");
 }
