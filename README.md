@@ -7,9 +7,12 @@ Because of war in Ukraine, we have to understand current status of all of our co
 ## Flow
 - Find telegram bot and init conversation
 - Enter slack username (in our company we use slack, but any set of unique ids can be used. Idea is to match telegram usenames that can be unknown within the company with company known usernames. This is highly recommended, as company can extend `People` spreadsheet with additional data, like telephone number, so, if heartbeat is missed, anyone with an access to this spreadsheet could reach this person). This step will appear only on first run, until proper slack(?) username is provided
-- Select location from one of predefined options
+- Select country from one of predefined options
+- If country has predefined regions, select region
+- If country or region has predefined city, select city
 - Select your current mood or provide comment
 - Heartbeat recorded.
+- On next heartbeat will appear `Use last location` option, so user may skip country/region/city selection.
 
 ## Flow results
 - `People` spreadsheet will be updated. It will contain current location in `Last location` column and heartbeat dateTime in `Last heartbeat` column
@@ -27,14 +30,6 @@ Because of war in Ukraine, we have to understand current status of all of our co
 - Reminders: Monday-Friday, 10a.m. and 3p.m.. Variables: `DAYS`, `HOURS`
 - Heartbeat update check: Daily, 4p.m. Variables: `EXPIRATION_HOUR`
 - Reset: 3a.m.. Variables: `CLEAN_UP_HOUR`.
-
-## Default configuration for zones
-- Red: Kyiv, Ukraine (Red). Variables: `redZones`.
-- Amber: Odesa, Ukraine (Amber). Variables: `amberZones`.
-- Green: Lviv, (Ukraine (Green)). Variables: `greenZones`.
-- Deep green: Moldova, Romania, Georgia, Poland, Other. Variables: `deepGreenZones`.
-Note: zones are used in `locations` variables as well - to create inline keyboard.
-
 
 ## Project setup
 ## Step 1: Create new telegram bot
