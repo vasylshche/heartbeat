@@ -12,27 +12,34 @@ var peopleSpreadsheet = "People";
  * Triggers
  */
 var DAYS = [ScriptApp.WeekDay.MONDAY, ScriptApp.WeekDay.TUESDAY, ScriptApp.WeekDay.WEDNESDAY, ScriptApp.WeekDay.THURSDAY, ScriptApp.WeekDay.FRIDAY];
-var HOURS = [10, 15];
-var CLEAN_UP_HOUR = 3;
-var EXPIRATION_HOUR = 16;
+// GMT, configured via appsscript.json file
+var HOURS = [7, 12];
+var CLEAN_UP_HOUR = 0;
+var EXPIRATION_HOUR = 13;
 
 /**
  * Texts
  */
 // message
-var PROPER_ID_MESSAGE = "Welcome";
-var WRONG_ID_MESSAGE = "Unknown user. Please try again";
-var GOODBYE_MESSAGE = "Heartbeat updated. Thank you";
+var PROPER_ID_MESSAGE = "Hey! Good to see you )";
+var WRONG_ID_MESSAGE = "Something is wrong. Please try again, or contact our sys admin for help";
+var GOODBYE_MESSAGE = "Information is updated. Thanks and have a nice day :)";
 
 // messages, used as quote for replies
-var SLACK_ID_MESSAGE = "Provide you slack username, `@doe.john`";
-var PROVIDE_YOUR_LOCATION_MESSAGE = "Provide your current location";
-var LOCATION_UPDATED_MESSAGE = "Updated. Select your current mood";
+var SLACK_ID_MESSAGE = "Please enter your login just once to start and bear with me ) \nE. g. `@doe.john`";
+var PROVIDE_YOUR_LOCATION_MESSAGE = "Please share your location";
+var MOOD_MESSAGE = "How are you today?";
+var LOCATION_UPDATED_MESSAGE = "Updated. " + MOOD_MESSAGE;
 var COUNTRY_SELECT_MESSAGE = "Select your country";
+var OTHER_COUNTRY_MESSAGE = "Please share your country name";
 var REGION_SELECT_MESSAGE = "Select your region";
 var CITY_SELECT_MESSAGE = "Select your city";
-var COMMENT_MESSAGE = "Enter your comment you want to provide";
-var MOOD_MESSAGE = "Select your current mood";
+var OTHER_POLISH_CITY_MESSAGE = "Please share your city name in Poland";
+var OTHER_EAST_CITY_MESSAGE = "Please share your city name in Eastern Ukraine";
+var OTHER_WEST_CITY_MESSAGE = "Please share your city name in Western Ukraine";
+var OTHER_SOUTH_CITY_MESSAGE = "Please share your city name in Southern Ukraine";
+var OTHER_CENTER_CITY_MESSAGE = "Please share your city name in Central Ukraine";
+var COMMENT_MESSAGE = "Please share your thoughts";
 
 // buttons
 var USE_LAST_BUTTON = "Use last location";
@@ -373,9 +380,15 @@ function doPost(e) {
               break;
           }
         } else { // it doesn't contain anything predefined
-          var name = callbackContent.from.first_name + " " + callbackContent.from.last_name;
-          appendLocation(username, chatId, name, countryObject.name, countryObject.zone);
-          respondWithKeyboard(chatId, MOOD_MESSAGE, moodsKeyboard);
+          switch (countryObject) {
+            case countries.OTHER_COUNTRY:
+              reply(chatId, OTHER_COUNTRY_MESSAGE);
+              break;
+            default:
+              var name = callbackContent.from.first_name + " " + callbackContent.from.last_name;
+              appendLocation(username, chatId, name, countryObject.name, countryObject.zone);
+              respondWithKeyboard(chatId, MOOD_MESSAGE, moodsKeyboard);
+          }
         }
       } else if (callbackContent.data.includes("_REGION")) { // user choose region
         var regionId = callbackContent.data;
@@ -396,8 +409,26 @@ function doPost(e) {
       } else if (callbackContent.data.includes("_CITY")) {// user choose city
         var name = callbackContent.from.first_name + " " + callbackContent.from.last_name;
         var cityObject = cityObjectById(callbackContent.data);
-        appendLocation(username, chatId, name, cityObject.name, cityObject.zone);
-        respondWithKeyboard(chatId, MOOD_MESSAGE, moodsKeyboard);
+        switch (cityObject) {
+          case countries.POLAND.cities.OTHER_POLAND:
+            reply(chatId, OTHER_POLISH_CITY_MESSAGE);
+            break;
+          case countries.UKRAINE.regions.CENTER.cities.OTHER_CENTER:
+            reply(chatId, OTHER_CENTER_CITY_MESSAGE)
+            break;
+          case countries.UKRAINE.regions.SOUTH.cities.OTHER_SOUTH:
+            reply(chatId, OTHER_SOUTH_CITY_MESSAGE)
+            break;
+          case countries.UKRAINE.regions.WEST.cities.OTHER_WEST:
+            reply(chatId, OTHER_WEST_CITY_MESSAGE)
+            break;
+          case countries.UKRAINE.regions.EAST.cities.OTHER_EAST:
+            reply(chatId, OTHER_EAST_CITY_MESSAGE)
+            break;
+          default:
+            appendLocation(username, chatId, name, cityObject.name, cityObject.zone);
+            respondWithKeyboard(chatId, MOOD_MESSAGE, moodsKeyboard);
+        }
       } else if (callbackContent.data.includes("_mood")) { // user provided his mood
         var mood = moods
           .map(buttons => buttons.find(button => button.id == callbackContent.data).name)
@@ -415,23 +446,56 @@ function doPost(e) {
         respond(chatId, GOODBYE_MESSAGE);
       }
     } else if (contents.message.reply_to_message) { // replies
-      if (contents.message.reply_to_message.text == COMMENT_MESSAGE) { // user provided comment instead of mood selection
-        var chatId = contents.message.reply_to_message.chat.id;
-        appendComment(chatId, contents.message.text);
-        respond(chatId, GOODBYE_MESSAGE);
-      } else if (contents.message.reply_to_message.text == SLACK_ID_MESSAGE) { // user provided his slack id
-        var chatId = contents.message.reply_to_message.chat.id;
-        var slackId = contents.message.text;
-        var username = contents.message.from.username;
-        if (saveUsername(chatId, slackId, username)) { // slack id was found and associated with chatId
-          respond(chatId, PROPER_ID_MESSAGE);
-          respondWithKeyboard(chatId, COUNTRY_SELECT_MESSAGE, countriesKeyboard);
-        } else { // slack id was not found, so retry
-          respond(chatId, WRONG_ID_MESSAGE);
-          reply(chatId, SLACK_ID_MESSAGE)
-        }
+      var chatId = contents.message.from.id;
+      var username = contents.message.from.username;
+      var name = contents.message.from.first_name + " " + contents.message.from.last_name;
+      switch (contents.message.reply_to_message.text) {
+        case COMMENT_MESSAGE: // user provided comment instead of mood selection
+          appendComment(chatId, contents.message.text);
+          respond(chatId, GOODBYE_MESSAGE);
+          break;
+        case SLACK_ID_MESSAGE: // user provided his slack id
+          var slackId = contents.message.text;
+          if (saveUsername(chatId, slackId, username)) { // slack id was found and associated with chatId
+            respond(chatId, PROPER_ID_MESSAGE);
+            respondWithKeyboard(chatId, COUNTRY_SELECT_MESSAGE, countriesKeyboard);
+          } else { // slack id was not found, so retry
+            respond(chatId, WRONG_ID_MESSAGE);
+            reply(chatId, SLACK_ID_MESSAGE)
+          }
+          break;
+        case OTHER_COUNTRY_MESSAGE:
+          var countryObject = countries.OTHER_COUNTRY;
+          appendLocation(username, chatId, name, contents.message.text, countryObject.zone);
+          respondWithKeyboard(chatId, MOOD_MESSAGE, moodsKeyboard);
+          break;
+        case OTHER_POLISH_CITY_MESSAGE:
+          var cityObject = countries.POLAND.cities.OTHER_POLAND
+          appendLocation(username, chatId, name, contents.message.text, cityObject.zone);
+          respondWithKeyboard(chatId, MOOD_MESSAGE, moodsKeyboard);
+          break;
+        case OTHER_EAST_CITY_MESSAGE:
+          var cityObject = countries.UKRAINE.regions.EAST.cities.OTHER_EAST
+          appendLocation(username, chatId, name, contents.message.text, cityObject.zone);
+          respondWithKeyboard(chatId, MOOD_MESSAGE, moodsKeyboard);
+          break;
+        case OTHER_WEST_CITY_MESSAGE:
+          var cityObject = countries.UKRAINE.regions.WEST.cities.OTHER_WEST
+          appendLocation(username, chatId, name, contents.message.text, cityObject.zone);
+          respondWithKeyboard(chatId, MOOD_MESSAGE, moodsKeyboard);
+          break;
+        case OTHER_SOUTH_CITY_MESSAGE:
+          var cityObject = countries.UKRAINE.regions.SOUTH.cities.OTHER_SOUTH
+          appendLocation(username, chatId, name, contents.message.text, cityObject.zone);
+          respondWithKeyboard(chatId, MOOD_MESSAGE, moodsKeyboard);
+          break;
+        case OTHER_CENTER_CITY_MESSAGE:
+          var cityObject = countries.UKRAINE.regions.CENTER.cities.OTHER_CENTER
+          appendLocation(username, chatId, name, contents.message.text, cityObject.zone);
+          respondWithKeyboard(chatId, MOOD_MESSAGE, moodsKeyboard);
+          break;
       }
-    } else { // any not expected text inputs or /start
+    } else if (contents.message) { // any not expected text inputs or /start
       var chatId = contents.message.chat.id;
       if (isUserKnown(chatId)) { // if user known, proceed
         if (isLastLocationKnown(chatId)) { // if user once provided his location, he is able to update heartbeat time without reentering all of the info
@@ -442,8 +506,10 @@ function doPost(e) {
       } else { // if user unknown, ask for slackId
         reply(chatId, SLACK_ID_MESSAGE)
       }
+    } else {
+      // something unexpected event, like user rejoined group 
     }
-  } catch (e) {
+  } catch (err) {
     respond(adminChatId, "ERROR: " + JSON.stringify(e, null, 4));
   }
 }
@@ -634,7 +700,7 @@ function askStatus() {
   var today = toDateString(new Date()).split(" ")[0];
   var peopleSpreadSheet = SpreadsheetApp.openById(ssId).getSheetByName(peopleSpreadsheet);
   peopleSpreadSheet.getDataRange().getValues().slice(1).forEach(row => {
-    if (!row.includes(today)) {
+    if (!row[5].includes(today)) {
       var maybeChatId = row[1];
       if (maybeChatId.toString().length > 0) {
         respondWithKeyboard(maybeChatId, PROVIDE_YOUR_LOCATION_MESSAGE, addOrUpdateKeyboard);
